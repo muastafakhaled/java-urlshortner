@@ -1,13 +1,11 @@
 package com.example.urlshortener.service;
 
 import com.example.urlshortener.entity.Url;
+import com.example.urlshortener.exception.UrlNotFoundException;
 import com.example.urlshortener.repository.UrlRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.UnknownHttpStatusCodeException;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Random;
 
@@ -23,33 +21,26 @@ public class UrlService {
     }
 
     public String ShortenUrl(String originalUrl) {
+        String ShortUrl = generateShortCode();
+        logger.info("Shortening URL: " + originalUrl + " to " + ShortUrl);
 
-        try {
-            String ShortUrl = generateShortCode();
-            logger.info("Shortening URL: " + originalUrl + " to " + ShortUrl);
+        Url url = new Url();
 
-            Url url = new Url();
+        url.setOriginalUrl(originalUrl);
+        url.setShortUrl(ShortUrl);
 
-            url.setOriginalUrl(originalUrl);
-            url.setShortUrl(ShortUrl);
+        urlRepository.save(url);
 
-            urlRepository.save(url);
-
-            return ShortUrl;
-        } catch (Exception e) {
-            logger.error("Error while shortening URL: " + originalUrl);
-            logger.error(e.getMessage());
-            throw new RuntimeException(e);
-        }
+        return ShortUrl;
 
 
     }
 
-    public String getOriginalUrl(String shortUrl){
+    public String getOriginalUrl(String shortUrl) {
         Url url = urlRepository.findByShortUrl(shortUrl);
 
-        if(url == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No Url Found");
+        if (url == null) {
+            throw new UrlNotFoundException();
         }
 
         return url.getOriginalUrl();
